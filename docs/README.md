@@ -34,27 +34,27 @@ After processing the above event, the system will send an alarm with the followi
 
 | Class | Explanation                                                  |
 | ---- |--------------------------------------------------------------|
-| SpringApplicationStarter | Starts the spring application                                |
-| Application | The application main class.                                  |
-| BuildingEventReader | Reads events from the input json file.                       |
-| BuildingEventHandler | Handles BuildingEvents and creates alram objects, if needed. |
-| AlarmWriter | Writes the alarms into a text file                           |
+| `SpringApplicationStarter` | Starts the spring application                                |
+| `Application` | The application main class.                                  |
+| `BuildingEventReader` | Reads events from the input json file.                       |
+| `BuildingEventHandler` | Handles `BuildingEvents` and creates alram objects, if needed. |
+| `AlarmWriter` | Writes the alarms into a text file                           |
 
-TODO: loose coupling event
+Note: `BuildingEventReader`, which is the source of events, is loosely coupled with `BuildingEventHandler`, which handles the events, via Spring ApplicationEvents.
 
 Implement the classes according to the following:
 
-Application
+## Application
 - Inject BuildingEventReader
 - In run() method call buildingEventReader.readEvents() to start event processing.
 
-BuildingEventReader
+## BuildingEventReader
 - setEventFilePath(): Spring should call this setter automatically, and inject the configuration value at ${event.file} key.
 - checkInputFile(): spring should call it automatically (use PostConstruct annotation)
-- implement ApplicationEventPublisherAware interface, so that Spring will set ApplicationEventPublisher object.
-- readEvents(): instead of the **// TODO: publish the events here** line, publish the BuildingEvent.
+- implement `ApplicationEventPublisherAware` interface, so that Spring will set `ApplicationEventPublisher` object.
+- readEvents(): replace **// TODO: publish the events here** line, with the actual publishing of `BuildingEvent`.
 
-AlarmWriter
+## AlarmWriter
 - Create the class.
 - Inject ${alarm.file}, to configure the alarm file path.
 - Implement `Lifecycle` interface.
@@ -65,14 +65,14 @@ AlarmWriter
 Note: this class is modelling an open resource, which is usually a network connection to a database or message broker.
 The class uses opens and closes the resource at the same time as Spring framework starts and stops.
 
-BuildingEventHandler
+## BuildingEventHandler
 - Create the class. It should implement `ApplicationListener<BuildingEvent>` interface.
-- inject AlarmWriter
-- onApplicationEvent(BuildingEvent): if the event type is FIRE_DETECTION or TEMPERATURE_TOO_HIGH, then create an alarm and send to AlarmWriter
+- inject `AlarmWriter`
+- onApplicationEvent(BuildingEvent): if the event type is `FIRE_DETECTION` or `TEMPERATURE_TOO_HIGH`, then create an alarm and send to AlarmWriter
 
 # Other Technologies
 
-Some other technolgoes used in this application
+Some other technologies used in this application
 
-- Simple Logging Facade for Java for writing log messages.
+- SLF4J (Simple Logging Facade for Java) for writing log messages.
 - Jackson ObjectMapper for simple json file processing.

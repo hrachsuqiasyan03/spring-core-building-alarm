@@ -1,0 +1,13 @@
+[
+  {
+    "eventType": "TEMPERATURE_TOO_HIGH",
+    "time": "2023-12-15T12:30:00+01:00",
+    "location": "Guest Apartment",
+    "message": "28°C"
+  },
+  {
+    "eventType": "FIRE_DETECTION",
+    "time": "2023-12-16T19:20:30+01:00",
+    "location": "Technology Tower, floor 5"
+  }
+]

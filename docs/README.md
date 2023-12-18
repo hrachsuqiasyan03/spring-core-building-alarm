@@ -3,6 +3,7 @@
 The goal of this exercise is to apply? some Spring Core framework features that are
 not very often used in an average spring application, but good? to understand and practice for a java developer.
 
+
 # Problem Domain
 
 Buildings are equipped by sensors that send notification to a computer system.
@@ -30,6 +31,18 @@ Note: format of the alert file is a simple text file, each alert is printed in a
 After processing the above event, the system will send an alarm with the following values:
 ("Call Mechanic", "Guest Apartment", "Room is hot")
 
+
+# Spring Technologies in this application
+
+- Annotation-driven bean configuration, component scan.
+- Using `PropertySource` to add more configuration values.
+- Configuration injection
+- `PostConstruct` - lifecycle method that can be used to validate the bean after construction
+- `Lifecycle` implementation (the beans starts and stops together with Spring Framework)
+- Custom `ApplicationEvent`s, publish and handle events
+- `BeanPostProcessor`
+
+
 # Application Structure
 
 | Class | Explanation                                                  |
@@ -45,8 +58,9 @@ Note: `BuildingEventReader`, which is the source of events, is loosely coupled w
 
 Implement the classes according to the following:
 
+
 ## Application
-- Inject BuildingEventReader
+- Inject `BuildingEventReader`
 - In run() method call buildingEventReader.readEvents() to start event processing.
 
 ## BuildingEventReader
@@ -72,20 +86,36 @@ The class uses opens and closes the resource at the same time as Spring framewor
 - onApplicationEvent(BuildingEvent): if the event type is `FIRE_DETECTION` or `TEMPERATURE_TOO_HIGH`, then create an alarm and send to AlarmWriter
 
 ## BeanListerBeanPostProcessor
-
 - Create the class. Implement BeanPostProcessor.
 - postProcessBeforeInitialization(): LOG the name of the created beans.
 
+# Playing with the Application
 
-# Spring Technologies in this application
+Run the application, and analyse the log output to understand how the actions happen one after the other.
 
-- Annotation-driven bean configuration, component scan.
-- Using `PropertySource` to add more configuration values.
-- Configuration injection
-- `PostConstruct` (lifecycle method)
-- `Lifecycle` implementation (start and stop bean)
-- Custom `ApplicationEvent`s, publish and handle events 
-- `BeanPostProcessor`
+You should see something like this:
+
+    [main] INFO com.epam.training.spring.SpringApplicationStarter - Creating ApplicationContext...
+    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: springConfig
+    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: alarmWriter
+    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: buildingEventReader
+    [main] INFO com.epam.training.spring.beans.BuildingEventReader - EventReader.checkInputFile() has been called
+    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: application
+    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: buildingEventHandler
+    [main] INFO com.epam.training.spring.SpringApplicationStarter - Starting ApplicationContext...
+    [main] INFO com.epam.training.spring.beans.AlarmWriter - AlarmWriter has been started
+    [main] INFO com.epam.training.spring.SpringApplicationStarter - Running application logic...
+    [main] INFO com.epam.training.spring.beans.Application - run() method has been called
+    [main] INFO com.epam.training.spring.beans.BuildingEventReader - Reading and publishing events...
+    [main] INFO com.epam.training.spring.beans.AlarmWriter - AlarmWriter has been stopped
+
+## Graceful shutdown
+
+Change Application.run() method
+
+- Add System.exit(0) call as a last instruction to the run() method
+- See the difference in the log: AlarmWriter.stop() method does not get called.
+- Change `SpringApplicationStarter`: right after applicationContext creation, call registerShutdownHook() on the context
 
 # Other Technologies
 

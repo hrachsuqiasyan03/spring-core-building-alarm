@@ -15,12 +15,24 @@ public class BuildingEventReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildingEventReader.class);
     private static final TypeReference<List<EventDto>> LIST_OF_EVENTS_TYPE_REF = new TypeReference<>() {};
 
-    private final File eventFile;
+    private String eventFilePath;
+    private File eventFile;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public BuildingEventReader(String eventFilePath) {
-        eventFile = new File(eventFilePath);
+    public BuildingEventReader() {
         objectMapper.findAndRegisterModules();
+    }
+
+    public void setEventFilePath(String eventFilePath) {
+        this.eventFilePath = eventFilePath;
+    }
+
+    public void checkInputFile() {
+        LOGGER.info("EventReader.checkInputFile() has been called");
+        eventFile = new File(eventFilePath);
+        if (!eventFile.exists()) {
+            throw new RuntimeException("File does not exists:" + eventFile.getAbsolutePath());
+        }
     }
 
     public void readEvents() {

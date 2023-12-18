@@ -39,6 +39,7 @@ After processing the above event, the system will send an alarm with the followi
 | `BuildingEventReader` | Reads events from the input json file.                       |
 | `BuildingEventHandler` | Handles `BuildingEvents` and creates alram objects, if needed. |
 | `AlarmWriter` | Writes the alarms into a text file                           |
+| `BeanListerBeanPostProcessor` | BeanPostProcessor that lists all beans of the spring context.
 
 Note: `BuildingEventReader`, which is the source of events, is loosely coupled with `BuildingEventHandler`, which handles the events, via Spring ApplicationEvents.
 
@@ -60,7 +61,7 @@ Implement the classes according to the following:
 - Implement `Lifecycle` interface.
   - start() method: open the alarm file.
   - stop() method: close the alarm file.
-  - isRunning()
+  - isRunning() method: provide meaningful implementation
 
 Note: this class is modelling an open resource, which is usually a network connection to a database or message broker.
 The class uses opens and closes the resource at the same time as Spring framework starts and stops.
@@ -69,6 +70,22 @@ The class uses opens and closes the resource at the same time as Spring framewor
 - Create the class. It should implement `ApplicationListener<BuildingEvent>` interface.
 - inject `AlarmWriter`
 - onApplicationEvent(BuildingEvent): if the event type is `FIRE_DETECTION` or `TEMPERATURE_TOO_HIGH`, then create an alarm and send to AlarmWriter
+
+## BeanListerBeanPostProcessor
+
+- Create the class. Implement BeanPostProcessor.
+- postProcessBeforeInitialization(): LOG the name of the created beans.
+
+
+# Spring Technologies in this application
+
+- Annotation-driven bean configuration, component scan.
+- Using `PropertySource` to add more configuration values.
+- Configuration injection
+- `PostConstruct` (lifecycle method)
+- `Lifecycle` implementation (start and stop bean)
+- Custom `ApplicationEvent`s, publish and handle events 
+- `BeanPostProcessor`
 
 # Other Technologies
 

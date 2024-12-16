@@ -41,7 +41,7 @@ Note: the alert file is a simple text file, each alert is printed in a separate 
 - Using `PropertySource` to add more configuration values.
 - Configuration value injection (`@Value`)
 - Lifecycle methods (`@PostConstruct`) that can be used to validate the bean after construction.
-- `Lifecycle` implementation: the beans starts and stops together with Spring Framework.
+- `Lifecycle` implementation: the bean starts and stops together with Spring Framework.
 - Custom `ApplicationEvent`s, publish and handle events.
 - `BeanPostProcessor` to modify beans
 - Application Context `registerShutdownHook()` for graceful shutdown
@@ -49,13 +49,13 @@ Note: the alert file is a simple text file, each alert is printed in a separate 
 
 # Application Structure
 
-| Class | Explanation                                                   |
-| ---- |---------------------------------------------------------------|
-| `SpringApplicationStarter` | Starts the spring application                                 |
-| `Application` | The application main class.                                   |
-| `BuildingEventReader` | Reads events from the input json file.                        |
-| `BuildingEventHandler` | Handles `BuildingEvents` and creates alarm objects.           |
-| `FileWriterAlarmHandler` | Handles alarms and writes into a text file.                   |
+| Class | Explanation                                                  |
+| ---- |--------------------------------------------------------------|
+| `SpringApplicationStarter` | Starts the spring application                                |
+| `Application` | The application main class.                                  |
+| `BuildingEventReader` | Reads events from the input json file.                       |
+| `BuildingEventHandler` | Handles `BuildingEvents` and creates alarm objects.          |
+| `FileWriterAlarmHandler` | Handles alarms and writes into a text file.                  |
 | `BeanListerBeanPostProcessor` | BeanPostProcessor that lists all beans of the spring context. |
 
 Note: `BuildingEventReader`, which is the source of events,
@@ -86,7 +86,7 @@ Implement the classes according to the following:
   - isRunning() method: add meaningful implementation
 
 Note: this class is modelling an open resource, which is usually a network connection to a database or message broker.
-The class uses opens and closes the resource at the same time as Spring framework starts and stops.
+The class opens and closes the resource at the same time as Spring framework starts and stops.
 
 ## BuildingEventHandler
 - Create the class. Let it be a Spring bean.

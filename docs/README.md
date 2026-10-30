@@ -1,145 +1,285 @@
-# Introduction
+# 🏢 Spring Core – Building Alarm System
 
-The goal of this exercise is to practice some Spring Core framework features
-that are not commonly used in typical spring applications,
-but useful for a java developer to understand and practice.
+A Java application built with the Spring Core Framework that simulates a building monitoring system. It processes building sensor events, detects potentially dangerous situations, and automatically generates alarms to notify responsible personnel.
 
+This project demonstrates essential Spring Core features, including Dependency Injection, Inversion of Control (IoC), Application Events, Bean Lifecycle Management, and BeanPostProcessor.
 
-# Problem Domain
+## 📌 Project Overview
 
-Buildings are equipped with sensors that send events to a computer system.
-Operators run an application that evaluates events, and in case of danger or risk,
-it automatically mitigates the problem by sending alerts to people who can respond and solve the problem.
+Modern buildings use sensors to monitor environmental conditions and detect potential hazards, such as fires or unusually high temperatures.
 
-Ideally, such an application should process streaming events,
-but for simplicity, this application reads events from JSON input file.
+The Building Alarm System simulates this process by reading sensor events from a JSON file, processing them through Spring-managed components, and generating alarms when specific conditions are detected.
 
-Example event:
+The application uses Spring's event-driven architecture to maintain loose coupling between event producers and event handlers.
 
-    {
-        "eventType": "TEMPERATURE_TOO_HIGH",
-        "time": "2023-12-15T12:30:00+01:00",
-        "location": "Guest Apartment",
-        "message": "28°C"
-    }
+### Example Scenario
 
-Depending on the event type, the application sends an alarm that has 3 attributes:
+A temperature sensor detects an unusually high temperature in a guest apartment.
 
-- action
-- location
-- reason
+**Input Event:**
 
-After processing the above event, the system will send an alarm with the following values:
-("Call Mechanic", "Guest Apartment", "Room is hot").
-
-Note: The alert file is a simple text file, each alert printed on a separate line. The format is not relevant.
-
-
-# Spring Technologies in this application
-
-- Annotation-driven bean configuration with component scanning.
-- Using `PropertySource` to provide additional configuration values.
-- Configuration value injection (`@Value`)
-- Lifecycle methods (`@PostConstruct`) used to validate the bean after construction.
-- `Lifecycle` implementation: the bean starts and stops together with the Spring Framework.
-- Custom `ApplicationEvent`s, publish and handle events.
-- `BeanPostProcessor` to modify beans.
-- Application Context `registerShutdownHook()` for graceful shutdown.
-
-
-# Application Structure
-
-| Class | Explanation                                                  |
-| ---- |--------------------------------------------------------------|
-| `SpringApplicationStarter` | Starts the spring application                                |
-| `Application` | The application main class.                                  |
-| `BuildingEventReader` | Reads events from the input json file.                       |
-| `BuildingEventHandler` | Handles `BuildingEvents` and creates alarm objects.          |
-| `FileWriterAlarmHandler` | Handles alarms and writes into a text file.                  |
-| `BeanListerBeanPostProcessor` | BeanPostProcessor that lists all beans of the spring context. |
-
-Note: `BuildingEventReader`, which is the source of events,
-is loosely coupled with `BuildingEventHandler`, which handles the events, through Spring `ApplicationEvent`.
-
-## Diagram
-
-![](https://raw.githubusercontent.com/epam-java-cre/exercise-specification-images/main/spring-core-building-alarm/building-alarm.png)
-
-Implement the classes according to the following:
-
-## Application
-- Inject `BuildingEventReader`
-- In `run()` method call `buildingEventReader.readEvents()` to start event reading and processing.
-
-## BuildingEventReader
-- `setEventFilePath()`: Spring should call this setter automatically
-  and inject the configuration value from the `${event.file.path}` key.
-  Note: Passing the value through the constructor would better conform to Spring best practices.
-  The setter is used here to demonstrate Lifecycle methods.
-- `checkInputFile()`: Spring should call this method automatically (use the `PostConstruct` annotation).
-- Implement `ApplicationEventPublisherAware` interface, so that Spring will set `ApplicationEventPublisher` object.
-- `readEvents()`: replace **// TODO: publish the events here** line, with the actual publishing of `BuildingEvent`.
-
-## FileWriterAlarmHandler
-- Create the class, let it be a Spring bean.
-- Inject `${alarm.file.path}`, to configure the alarm file path.
-- Implement `Lifecycle` interface.
-  - `start()` method: open the alarm file.
-  - `stop()` method: close the alarm file.
-  - `isRunning()` method: add meaningful implementation.
-    (It should return `true` if the file is open, `false` otherwise.)
-
-Note: This class models an open resource,
-which is usually a network connection to a database or message broker in a real enterprise application.
-The class opens and closes the resource in sync with the Spring framework's lifecycle.
-
-## BuildingEventHandler
-- Create the class. Let it be a Spring bean.
-- It should implement `ApplicationListener<BuildingEvent>` interface.
-- inject `AlarmHandler`
-- `onApplicationEvent(BuildingEvent)`: If the event type is `FIRE_DETECTION` or `TEMPERATURE_TOO_HIGH`,
-  create an alarm and send it to the `AlarmHandler`
-
-
-# Playing with the Application
-
-Run the application, and analyse the log output to understand how the actions happen one after the other.
-
-You should see output similar to the following:
-
-```text
-    [main] INFO com.epam.training.spring.SpringApplicationStarter - Creating ApplicationContext...
-    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: springConfig
-    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: alarmWriter
-    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: buildingEventReader
-    [main] INFO com.epam.training.spring.beans.BuildingEventReader - EventReader.checkInputFile() has been called
-    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: application
-    [main] INFO com.epam.training.spring.beans.BeanListerBeanPostProcessor - Bean initialization: buildingEventHandler
-    [main] INFO com.epam.training.spring.SpringApplicationStarter - Starting ApplicationContext...
-    [main] INFO com.epam.training.spring.beans.AlarmWriter - AlarmWriter has been started
-    [main] INFO com.epam.training.spring.SpringApplicationStarter - Running application logic...
-    [main] INFO com.epam.training.spring.beans.Application - run() method has been called
-    [main] INFO com.epam.training.spring.beans.BuildingEventReader - Reading and publishing events...
-    [main] INFO com.epam.training.spring.beans.AlarmWriter - AlarmWriter has been stopped
+```json
+{
+  "eventType": "TEMPERATURE_TOO_HIGH",
+  "time": "2023-12-15T12:30:00+01:00",
+  "location": "Guest Apartment",
+  "message": "28°C"
+}
 ```
 
-## Graceful shutdown
+**Generated Alarm:**
 
-Change the `Application.run()` method
+```text
+Action: Call Mechanic
+Location: Guest Apartment
+Reason: Room is hot
+```
 
-- Add `System.exit(0)` call as a last instruction to the `run()` method.
-- Observe the difference in the log: `AlarmWriter.stop()` method does not get called.
-- Change `SpringApplicationStarter`: immediately after creating the application context,
-  call `registerShutdownHook()` on the context.
+The application also supports fire detection events and generates corresponding alarms.
 
-## BeanListerBeanPostProcessor
-- Create the class. Implement `BeanPostProcessor`.
-- `postProcessBeforeInitialization()`: LOG the name of the created beans.
+## ⚙️ Technologies & Tools
 
+| Technology | Purpose |
+|---|---|
+| Java | Main programming language |
+| Spring Core | Dependency Injection and application configuration |
+| Spring Context | ApplicationContext and event management |
+| Jackson | JSON file processing |
+| SLF4J | Application logging |
+| Maven | Dependency and build management |
+| Git | Version control |
 
-# Other Technologies
+## 🏗️ Application Architecture
 
-Some other technologies used in this application
+The application follows an event-driven architecture in which event reading, event processing, and alarm generation are handled by separate Spring-managed components.
 
-- `SLF4J` (Simple Logging Facade for Java) for writing log messages.
-- Jackson `ObjectMapper` for JSON file processing.
+### Main Components
+
+| Component | Responsibility |
+|---|---|
+| `SpringApplicationStarter` | Initializes the Spring ApplicationContext and manages application startup and shutdown |
+| `Application` | Main application component that starts event processing |
+| `BuildingEventReader` | Reads sensor events from a JSON input file and publishes Spring application events |
+| `BuildingEventHandler` | Listens for building events and generates alarms |
+| `FileWriterAlarmHandler` | Manages the alarm output file and writes generated alarms |
+| `BeanListerBeanPostProcessor` | Logs Spring bean names before initialization |
+
+### Event Processing Flow
+
+```text
+             Application Startup
+                     |
+                     v
+             Spring ApplicationContext
+                     |
+                     v
+              Application.run()
+                     |
+                     v
+           BuildingEventReader
+                     |
+                     v
+          Read Events from JSON
+                     |
+                     v
+        ApplicationEventPublisher
+                     |
+                     v
+             BuildingEvent
+                     |
+                     v
+          BuildingEventHandler
+                     |
+              Event Evaluation
+                     |
+          +----------+----------+
+          |                     |
+          v                     v
+    FIRE_DETECTION      TEMPERATURE_TOO_HIGH
+          |                     |
+          +----------+----------+
+                     |
+                     v
+               Create Alarm
+                     |
+                     v
+          FileWriterAlarmHandler
+                     |
+                     v
+              Alarm Output File
+```
+
+## 🌱 Spring Core Features Demonstrated
+
+### 1. Inversion of Control (IoC)
+
+The application uses Spring's IoC Container to manage object creation, dependencies, and bean lifecycle.
+
+Instead of manually creating and connecting all application components, Spring manages their dependencies.
+
+### 2. Dependency Injection (DI)
+
+Dependencies are injected into Spring-managed beans.
+
+For example:
+- `Application` receives `BuildingEventReader`.
+- `BuildingEventHandler` receives `AlarmHandler`.
+- `BuildingEventReader` receives `ApplicationEventPublisher` through `ApplicationEventPublisherAware`.
+
+This reduces direct dependencies between components and improves maintainability.
+
+### 3. Annotation-Based Configuration
+
+The application uses annotation-driven configuration and component scanning to register Spring beans.
+
+Relevant Spring annotations include:
+
+- `@Configuration`
+- `@ComponentScan`
+- `@Component`
+- `@Value`
+- `@PostConstruct`
+
+### 4. PropertySource and Value Injection
+
+Application-specific configuration values are injected using Spring's property resolution mechanism.
+
+Examples:
+
+```java
+@Value("${event.file.path}")
+private String eventFilePath;
+
+@Value("${alarm.file.path}")
+private String alarmFilePath;
+```
+
+This allows file paths to be configured externally rather than hardcoded in application classes.
+
+### 5. Bean Lifecycle Management
+
+The project demonstrates different mechanisms for managing the lifecycle of Spring beans.
+
+**@PostConstruct**
+
+Used to execute validation logic after bean dependency injection and before the bean is fully initialized.
+
+**Lifecycle Interface**
+
+`FileWriterAlarmHandler` implements Spring's `Lifecycle` interface.
+
+- `start()` – Opens the alarm output resource.
+- `stop()` – Closes the resource.
+- `isRunning()` – Indicates whether the resource is currently active.
+
+This demonstrates how Spring can manage resources that require explicit startup and shutdown operations.
+
+### 6. Spring Application Events
+
+The application uses Spring's event publishing and listening mechanism to achieve loose coupling between components.
+
+- `BuildingEventReader` publishes events using `ApplicationEventPublisher`.
+- `BuildingEventHandler` implements `ApplicationListener<BuildingEvent>`.
+- The event handler processes incoming events and generates alarms.
+
+The event reader does not need to know which component handles the published events.
+
+### 7. BeanPostProcessor
+
+`BeanListerBeanPostProcessor` implements Spring's `BeanPostProcessor` interface.
+
+It uses `postProcessBeforeInitialization()` to log the names of Spring-managed beans before their initialization callbacks.
+
+This demonstrates how Spring allows developers to customize bean processing.
+
+### 8. Graceful Shutdown
+
+The application uses `ApplicationContext.registerShutdownHook()` to ensure that Spring-managed lifecycle components receive their shutdown callbacks when the JVM terminates normally.
+
+This allows resources such as file writers to be closed properly.
+
+## 📂 Configuration
+
+The application uses external properties to configure input and output file locations.
+
+Example configuration:
+
+```properties
+event.file.path=src/main/resources/events.json
+alarm.file.path=src/main/resources/alarms.txt
+```
+
+The actual paths should match the project's resource configuration.
+
+## 🚀 Running the Application
+
+### Prerequisites
+
+- Java Development Kit (JDK)
+- Maven
+- Git
+
+### Clone the Repository
+
+```bash
+git clone <repository-url>
+```
+
+### Navigate to the Project
+
+```bash
+cd spring-core-building-alarm
+```
+
+### Build the Application
+
+```bash
+mvn clean install
+```
+
+### Run the Application
+
+Run the `SpringApplicationStarter` main class from your IDE or use the project's configured Maven execution command.
+
+## 📋 Expected Behavior
+
+When the application starts, Spring initializes the ApplicationContext and its managed beans.
+
+The application then:
+
+1. Initializes Spring-managed components.
+2. Opens the alarm output file.
+3. Reads events from the JSON input file.
+4. Publishes `BuildingEvent` objects.
+5. Processes events through `BuildingEventHandler`.
+6. Generates alarms for supported event types.
+7. Writes alarms to the output file.
+8. Closes the output resource during graceful shutdown.
+
+## 🎯 Learning Objectives
+
+This project provides practical experience with:
+
+- Understanding Spring IoC Container and Dependency Injection.
+- Configuring Spring beans using annotations.
+- Injecting configuration values using `@Value`.
+- Working with bean initialization callbacks using `@PostConstruct`.
+- Managing resources through the Spring `Lifecycle` interface.
+- Publishing and handling custom Spring Application Events.
+- Understanding loose coupling and event-driven architecture.
+- Extending bean initialization using `BeanPostProcessor`.
+- Managing application shutdown using `registerShutdownHook()`.
+- Processing JSON data with Jackson.
+
+## 📚 Key Takeaways
+
+The Building Alarm System demonstrates how Spring Core can manage application components, coordinate communication through application events, and control resource lifecycles.
+
+Although the application uses JSON files instead of real-time sensor streams, its architecture illustrates important concepts that are also applicable to larger enterprise Java applications.
+
+---
+
+**Project:** Spring Core – Building Alarm System  
+**Language:** Java  
+**Framework:** Spring Core  
+**Purpose:** Educational project focused on Spring Framework fundamentals.
